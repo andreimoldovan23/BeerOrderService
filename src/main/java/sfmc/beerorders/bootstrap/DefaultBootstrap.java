@@ -1,6 +1,7 @@
 package sfmc.beerorders.bootstrap;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import sfmc.beerorders.domain.Customer;
@@ -10,6 +11,7 @@ import java.util.UUID;
 
 @RequiredArgsConstructor
 @Component
+@Slf4j
 public class DefaultBootstrap implements CommandLineRunner {
     public static final String TASTING_ROOM = "Tasting Room";
     public static final String BEER_1_UPC = "0631234200036";
@@ -19,15 +21,17 @@ public class DefaultBootstrap implements CommandLineRunner {
     private final CustomerRepository customerRepository;
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         if (customerRepository.count() == 0)
             loadData();
     }
 
     private void loadData() {
-        customerRepository.save(Customer.builder()
+        Customer customer = customerRepository.save(Customer.builder()
                 .customerName(TASTING_ROOM)
                 .apiKey(UUID.randomUUID())
                 .build());
+
+        log.trace("Saved customer w/ id {}", customer.getId());
     }
 }

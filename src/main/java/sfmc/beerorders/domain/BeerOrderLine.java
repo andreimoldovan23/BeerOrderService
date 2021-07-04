@@ -21,6 +21,7 @@ public class BeerOrderLine extends BaseEntity {
     private BeerOrder beerOrder;
 
     private UUID beerId;
+    private String upc;
 
     @Builder.Default
     private Integer orderQuantity = 0;

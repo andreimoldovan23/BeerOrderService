@@ -36,7 +36,8 @@
 
         <!-- App -->
         <Logger name="sfmc.beerorders.services" level="TRACE"/>
-        <Logger name="sfmc.beerorders.web.controllers" level="TRACE"/>
+        <Logger name="sfmc.beerorders.web" level="TRACE"/>
+        <Logger name="sfmc.beerorders.bootstrap" level="TRACE"/>
 
         <!-- ROOT -->
         <Root level="WARN">

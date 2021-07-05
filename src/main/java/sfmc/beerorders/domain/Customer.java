@@ -4,6 +4,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -24,7 +25,8 @@ import java.util.UUID;
 public class Customer extends BaseEntity {
     private String customerName;
 
-    @Column(length = 36, columnDefinition = "varchar")
+    @Type(type="org.hibernate.type.UUIDCharType")
+    @Column(length = 36, columnDefinition = "varchar(36)")
     private UUID apiKey;
 
     @Singular

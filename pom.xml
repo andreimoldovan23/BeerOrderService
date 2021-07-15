@@ -76,6 +76,13 @@
         </dependency>
 
 
+        <!--JMS-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-artemis</artifactId>
+        </dependency>
+
+
         <!--Data persistence-->
         <dependency>
             <groupId>org.springframework.boot</groupId>

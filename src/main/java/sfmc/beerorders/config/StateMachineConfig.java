@@ -5,6 +5,7 @@ import java.util.EnumSet;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.statemachine.action.Action;
 import org.springframework.statemachine.config.EnableStateMachineFactory;
 import org.springframework.statemachine.config.StateMachineConfigurerAdapter;
 import org.springframework.statemachine.config.builders.StateMachineConfigurationConfigurer;
@@ -20,6 +21,8 @@ import sfmc.beerorders.domain.BeerOrderStatus;
 @RequiredArgsConstructor
 @Slf4j
 public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderStatus, BeerOrderEvent> {
+    private final Action<BeerOrderStatus, BeerOrderEvent> validateOrderAction;
+
     @Override
     public void configure(StateMachineConfigurationConfigurer<BeerOrderStatus, BeerOrderEvent> config) throws Exception {
         StateMachineListenerAdapter<BeerOrderStatus, BeerOrderEvent> listener = new StateMachineListenerAdapter<>() {
@@ -47,7 +50,8 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderS
     public void configure(StateMachineTransitionConfigurer<BeerOrderStatus, BeerOrderEvent> transitions) throws Exception {
         transitions
                 .withExternal()
-                .source(BeerOrderStatus.NEW).target(BeerOrderStatus.NEW).event(BeerOrderEvent.VALIDATION)
+                .source(BeerOrderStatus.NEW).target(BeerOrderStatus.PENDING_VALIDATION).event(BeerOrderEvent.VALIDATION)
+                .action(validateOrderAction)
 
                 .and()
 
@@ -62,7 +66,7 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderS
                 .and()
 
                 .withExternal()
-                .source(BeerOrderStatus.VALIDATED).target(BeerOrderStatus.VALIDATED).event(BeerOrderEvent.ALLOCATION)
+                .source(BeerOrderStatus.VALIDATED).target(BeerOrderStatus.PENDING_ALLOCATION).event(BeerOrderEvent.ALLOCATION)
 
                 .and()
 

@@ -1,5 +1,7 @@
 package sfmc.beerorders.services.implementations;
 
+import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
@@ -29,6 +31,16 @@ public class BeerOrderManagerServiceImpl implements BeerOrderManagerService {
         beerOrder = beerOrderRepository.save(beerOrder);
         sendEvent(beerOrder, BeerOrderEvent.VALIDATION);
         return beerOrder;
+    }
+
+    @Override
+    public void processValidationResult(UUID orderId, Boolean isValid) {
+        BeerOrder beerOrder = beerOrderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("No such order"));
+        if (isValid) {
+            sendEvent(beerOrder, BeerOrderEvent.VALIDATION_PASSED);
+        } else {
+            sendEvent(beerOrder, BeerOrderEvent.VALIDATION_FAILED);
+        }
     }
 
     private void sendEvent(BeerOrder beerOrder, BeerOrderEvent event) {

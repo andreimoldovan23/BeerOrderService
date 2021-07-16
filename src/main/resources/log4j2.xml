@@ -38,6 +38,7 @@
         <Logger name="sfmc.beerorders.services" level="TRACE"/>
         <Logger name="sfmc.beerorders.web" level="TRACE"/>
         <Logger name="sfmc.beerorders.bootstrap" level="TRACE"/>
+        <Logger name="sfmc.beerorders.config" level="TRACE"/>
 
         <!-- ROOT -->
         <Root level="WARN">

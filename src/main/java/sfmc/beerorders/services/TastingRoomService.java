@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import sfmc.beerorders.bootstrap.DefaultBootstrap;
 import sfmc.beerorders.domain.Customer;
 import sfmc.beerorders.repositories.CustomerRepository;
+import sfmc.beerorders.services.interfaces.BeerOrderService;
 import sfmc.beerorders.web.model.BeerOrderDTO;
 import sfmc.beerorders.web.model.BeerOrderLineDTO;
 

@@ -2,7 +2,7 @@ package sfmc.beerorders.web.model;
 
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import sfmc.beerorders.domain.OrderStatusEnum;
+import sfmc.beerorders.domain.BeerOrderStatus;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,6 +20,6 @@ public class BeerOrderDTO extends BaseItem {
     @Singular
     private List<BeerOrderLineDTO> beerOrderLines;
 
-    private OrderStatusEnum orderStatus;
+    private BeerOrderStatus orderStatus;
     private String orderStatusCallbackUrl;
 }

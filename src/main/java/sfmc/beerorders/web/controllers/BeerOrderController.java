@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import sfmc.beerorders.services.BeerOrderService;
+import sfmc.beerorders.services.interfaces.BeerOrderService;
 import sfmc.beerorders.web.model.BeerOrderDTO;
 import sfmc.beerorders.web.model.BeerOrderPagedList;
 

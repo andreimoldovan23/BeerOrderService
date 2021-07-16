@@ -1,4 +1,4 @@
-package sfmc.beerorders.services;
+package sfmc.beerorders.services.implementations;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,9 +9,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import sfmc.beerorders.domain.BeerOrder;
 import sfmc.beerorders.domain.Customer;
-import sfmc.beerorders.domain.OrderStatusEnum;
+import sfmc.beerorders.domain.BeerOrderStatus;
 import sfmc.beerorders.repositories.BeerOrderRepository;
 import sfmc.beerorders.repositories.CustomerRepository;
+import sfmc.beerorders.services.interfaces.BeerOrderService;
 import sfmc.beerorders.web.mappers.BeerOrderMapper;
 import sfmc.beerorders.web.model.BeerOrderDTO;
 import sfmc.beerorders.web.model.BeerOrderPagedList;
@@ -66,7 +67,7 @@ public class BeerOrderServiceImpl implements BeerOrderService {
         BeerOrder beerOrder = beerOrderMapper.dtoToBeerOrder(beerOrderDto);
         beerOrder.setId(null);
         beerOrder.setCustomer(customer);
-        beerOrder.setOrderStatus(OrderStatusEnum.NEW);
+        beerOrder.setOrderStatus(BeerOrderStatus.NEW);
 
         beerOrder.getBeerOrderLines().forEach(line -> line.setBeerOrder(beerOrder));
 
@@ -96,7 +97,7 @@ public class BeerOrderServiceImpl implements BeerOrderService {
         log.trace("Picking up order w/ customerId {}, w/ id {}", customerId, orderId);
 
         BeerOrder beerOrder = getOrder(customerId, orderId);
-        beerOrder.setOrderStatus(OrderStatusEnum.PICKED_UP);
+        beerOrder.setOrderStatus(BeerOrderStatus.PICKED_UP);
         beerOrderRepository.save(beerOrder);
     }
 

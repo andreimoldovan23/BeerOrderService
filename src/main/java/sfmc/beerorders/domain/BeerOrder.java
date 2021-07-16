@@ -33,7 +33,7 @@ public class BeerOrder extends BaseEntity {
     private Set<BeerOrderLine> beerOrderLines = new HashSet<>();
 
     @Builder.Default
-    private OrderStatusEnum orderStatus = OrderStatusEnum.NEW;
+    private BeerOrderStatus orderStatus = BeerOrderStatus.NEW;
 
     private String orderStatusCallbackUrl;
 }

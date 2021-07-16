@@ -1,4 +1,4 @@
-package sfmc.beerorders.services;
+package sfmc.beerorders.services.interfaces;
 
 import org.springframework.data.domain.Pageable;
 import sfmc.beerorders.web.model.BeerOrderDTO;

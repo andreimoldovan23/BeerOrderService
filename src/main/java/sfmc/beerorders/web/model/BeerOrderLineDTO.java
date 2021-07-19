@@ -21,4 +21,6 @@ public class BeerOrderLineDTO extends BaseItem {
 
     @Builder.Default
     private Integer orderQuantity = 0;
+
+    private Integer quantityAllocated;
 }

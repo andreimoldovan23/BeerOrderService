@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jms.support.converter.MappingJackson2MessageConverter;
 import org.springframework.jms.support.converter.MessageConverter;
 import org.springframework.jms.support.converter.MessageType;
+import sfmc.beerorders.events.AllocateOrderEvent;
+import sfmc.beerorders.events.AllocationResponseEvent;
 import sfmc.beerorders.events.ValidateOrderEvent;
 import sfmc.beerorders.events.ValidationResponseEvent;
 import sfmc.beerorders.web.model.BeerOrderDTO;
@@ -17,6 +19,8 @@ import sfmc.beerorders.web.model.BeerOrderLineDTO;
 public class JmsConfig {
     public static final String VALIDATE_ORDER_QUEUE = "validate-order-request";
     public static final String VALIDATE_ORDER_RESPONSE_QUEUE = "validate-order-response";
+    public static final String ALLOCATE_ORDER_QUEUE = "allocate-order-request";
+    public static final String ALLOCATION_RESPONSE_QUEUE = "allocate-request-response";
 
     @Bean
     public MessageConverter jacksonJmsMessageConverter(ObjectMapper objectMapper) {
@@ -28,6 +32,8 @@ public class JmsConfig {
         typeIdMappings.put(BeerOrderDTO.class.getSimpleName(), BeerOrderDTO.class);
         typeIdMappings.put(BeerOrderLineDTO.class.getSimpleName(), BeerOrderLineDTO.class);
         typeIdMappings.put(ValidationResponseEvent.class.getSimpleName(), ValidationResponseEvent.class);
+        typeIdMappings.put(AllocateOrderEvent.class.getSimpleName(), AllocateOrderEvent.class);
+        typeIdMappings.put(AllocationResponseEvent.class.getSimpleName(), AllocationResponseEvent.class);
 
         converter.setTypeIdMappings(typeIdMappings);
         converter.setTypeIdPropertyName("_type");

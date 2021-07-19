@@ -1,5 +1,6 @@
 package sfmc.beerorders.services.implementations;
 
+import java.util.List;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -9,11 +10,14 @@ import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.statemachine.support.DefaultStateMachineContext;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import sfmc.beerorders.domain.BeerOrder;
 import sfmc.beerorders.domain.BeerOrderEvent;
 import sfmc.beerorders.domain.BeerOrderStatus;
 import sfmc.beerorders.repositories.BeerOrderRepository;
 import sfmc.beerorders.services.interfaces.BeerOrderManagerService;
+import sfmc.beerorders.web.model.BeerOrderDTO;
+import sfmc.beerorders.web.model.BeerOrderLineDTO;
 
 @Service
 @RequiredArgsConstructor
@@ -33,14 +37,44 @@ public class BeerOrderManagerServiceImpl implements BeerOrderManagerService {
         return beerOrder;
     }
 
+    @Transactional
     @Override
     public void processValidationResult(UUID orderId, Boolean isValid) {
         BeerOrder beerOrder = beerOrderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("No such order"));
         if (isValid) {
             sendEvent(beerOrder, BeerOrderEvent.VALIDATION_PASSED);
+
+            beerOrder = beerOrderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("No such order"));
+            sendEvent(beerOrder, BeerOrderEvent.ALLOCATION);
         } else {
             sendEvent(beerOrder, BeerOrderEvent.VALIDATION_FAILED);
         }
+    }
+
+    @Override
+    public void processAllocationResult(BeerOrderDTO dto, Boolean allocationError, Boolean pendingInventory) {
+        BeerOrder beerOrder = beerOrderRepository.findById(dto.getId()).orElseThrow(() -> new RuntimeException("No such order"));
+        if (!allocationError && !pendingInventory) {
+            sendEvent(beerOrder, BeerOrderEvent.ALLOCATION_SUCCESS);
+        } else if (!allocationError) {
+            sendEvent(beerOrder, BeerOrderEvent.ALLOCATION_NO_INVENTORY);
+        } else {
+            sendEvent(beerOrder, BeerOrderEvent.ALLOCATION_FAILED);
+            return;
+        }
+        updateQuantity(dto);
+    }
+
+    private void updateQuantity(BeerOrderDTO dto) {
+        BeerOrder beerOrder = beerOrderRepository.getById(dto.getId());
+
+        beerOrder.getBeerOrderLines().forEach(orderLine -> dto.getBeerOrderLines().forEach(line -> {
+            if (line.getId().equals(orderLine.getId())) {
+                orderLine.setQuantityAllocated(line.getQuantityAllocated());
+            }
+        }));
+
+        beerOrderRepository.saveAndFlush(beerOrder);
     }
 
     private void sendEvent(BeerOrder beerOrder, BeerOrderEvent event) {

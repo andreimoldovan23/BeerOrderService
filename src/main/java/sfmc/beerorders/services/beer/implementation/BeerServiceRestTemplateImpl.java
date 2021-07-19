@@ -16,8 +16,8 @@ import java.util.UUID;
 public class BeerServiceRestTemplateImpl implements BeerService {
 
     @Value("${beer.host}") private String beerHost;
-    private static final String beerApiId = "/api/v1/beer/{beerId}";
-    private static final String beerApiUpc = "/api/v1/beerUpc/{beerUpc}";
+    public static final String beerApiId = "/api/v1/beer/{beerId}";
+    public static final String beerApiUpc = "/api/v1/beerUpc/{beerUpc}";
 
     private final RestTemplate restTemplate;
 

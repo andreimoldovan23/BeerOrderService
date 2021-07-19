@@ -36,7 +36,7 @@ public class TastingRoomService {
     }
 
     @Transactional
-    @Scheduled(fixedRate = 2000, initialDelay = 2000)
+    @Scheduled(fixedRate = 2000, initialDelay = 5000)
     public void placeTastingRoomOrder(){
         log.trace("Placing tasting room order...");
         List<Customer> customerList = customerRepository.findAllByCustomerNameLike(DefaultBootstrap.TASTING_ROOM);

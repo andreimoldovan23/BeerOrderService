@@ -1,6 +1,5 @@
 package sfmc.beerorders.services.implementations;
 
-import java.util.List;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -17,7 +16,6 @@ import sfmc.beerorders.domain.BeerOrderStatus;
 import sfmc.beerorders.repositories.BeerOrderRepository;
 import sfmc.beerorders.services.interfaces.BeerOrderManagerService;
 import sfmc.beerorders.web.model.BeerOrderDTO;
-import sfmc.beerorders.web.model.BeerOrderLineDTO;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +26,7 @@ public class BeerOrderManagerServiceImpl implements BeerOrderManagerService {
     private final StateMachineFactory<BeerOrderStatus, BeerOrderEvent> stateMachineFactory;
     private final BeerOrderStateChangeInterceptor interceptor;
 
+    @Transactional
     @Override
     public BeerOrder newOrder(BeerOrder beerOrder) {
         beerOrder.setId(null);
@@ -51,6 +50,7 @@ public class BeerOrderManagerServiceImpl implements BeerOrderManagerService {
         }
     }
 
+    @Transactional
     @Override
     public void processAllocationResult(BeerOrderDTO dto, Boolean allocationError, Boolean pendingInventory) {
         BeerOrder beerOrder = beerOrderRepository.findById(dto.getId()).orElseThrow(() -> new RuntimeException("No such order"));
@@ -63,6 +63,13 @@ public class BeerOrderManagerServiceImpl implements BeerOrderManagerService {
             return;
         }
         updateQuantity(dto);
+    }
+
+    @Transactional
+    @Override
+    public void pickOrderUp(UUID id) {
+        BeerOrder beerOrder = beerOrderRepository.findById(id).orElseThrow(() -> new RuntimeException("No such order"));
+        sendEvent(beerOrder, BeerOrderEvent.BEER_ORDER_PICKED_UP);
     }
 
     private void updateQuantity(BeerOrderDTO dto) {

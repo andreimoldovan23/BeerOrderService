@@ -43,8 +43,7 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderS
                 .states(EnumSet.allOf(BeerOrderStatus.class))
                 .end(BeerOrderStatus.VALIDATION_EXCEPTION)
                 .end(BeerOrderStatus.ALLOCATION_EXCEPTION)
-                .end(BeerOrderStatus.DELIVERY_EXCEPTION)
-                .end(BeerOrderStatus.DELIVERY);
+                .end(BeerOrderStatus.PICKED_UP);
     }
 
     @Override
@@ -83,6 +82,11 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderS
                 .and()
 
                 .withExternal()
-                .source(BeerOrderStatus.PENDING_ALLOCATION).target(BeerOrderStatus.PENDING_INVENTORY).event(BeerOrderEvent.ALLOCATION_NO_INVENTORY);
+                .source(BeerOrderStatus.PENDING_ALLOCATION).target(BeerOrderStatus.PENDING_INVENTORY).event(BeerOrderEvent.ALLOCATION_NO_INVENTORY)
+
+                .and()
+
+                .withExternal()
+                .source(BeerOrderStatus.ALLOCATED).target(BeerOrderStatus.PICKED_UP).event(BeerOrderEvent.BEER_ORDER_PICKED_UP);
     }
 }

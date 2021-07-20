@@ -9,7 +9,6 @@ import org.springframework.statemachine.StateContext;
 import org.springframework.statemachine.action.Action;
 import org.springframework.stereotype.Component;
 import sfmc.beerorders.config.JmsConfig;
-import sfmc.beerorders.domain.BeerOrder;
 import sfmc.beerorders.domain.BeerOrderEvent;
 import sfmc.beerorders.domain.BeerOrderStatus;
 import sfmc.beerorders.events.AllocateOrderEvent;
@@ -32,11 +31,11 @@ public class AllocateOrderAction implements Action<BeerOrderStatus, BeerOrderEve
                 .getOrDefault(BeerOrderManagerServiceImpl.ORDER_ID_HEADER, " "));
 
         log.trace("Allocation - Got id from message: {}", id);
-        BeerOrder beerOrder = beerOrderRepository.findById(id).orElseThrow(() -> new RuntimeException("No such order"));
+        beerOrderRepository.findById(id).ifPresentOrElse(beerOrder -> {
+            log.trace("Allocation - Got order from db: {}", beerOrder);
+            BeerOrderDTO dto = beerOrderMapper.beerOrderToDto(beerOrder);
 
-        log.trace("Allocation - Got order from db: {}", beerOrder);
-        BeerOrderDTO dto = beerOrderMapper.beerOrderToDto(beerOrder);
-
-        jmsTemplate.convertAndSend(JmsConfig.ALLOCATE_ORDER_QUEUE, new AllocateOrderEvent(dto));
+            jmsTemplate.convertAndSend(JmsConfig.ALLOCATE_ORDER_QUEUE, new AllocateOrderEvent(dto));
+        }, () -> log.trace("Allocate action - no such order: {}", id));
     }
 }

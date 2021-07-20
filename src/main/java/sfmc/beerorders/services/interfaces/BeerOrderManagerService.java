@@ -10,4 +10,5 @@ public interface BeerOrderManagerService {
     void processValidationResult(UUID orderId, Boolean isValid);
     void processAllocationResult(BeerOrderDTO dto, Boolean allocationError, Boolean pendingInventory);
     void pickOrderUp(UUID id);
+    void cancelOrder(UUID id);
 }

@@ -2,6 +2,7 @@ package sfmc.beerorders.services.testcomponents;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.messaging.Message;
@@ -15,6 +16,9 @@ import sfmc.beerorders.events.AllocationResponseEvent;
 @Component
 public class OrderAllocationListener {
     private final JmsTemplate template;
+    @Value("${fail.allocation}") private String customerRefAllocationFail;
+    @Value("${partial.allocation}") private String customerRefAllocationPartial;
+    @Value("${cancel.allocation}") private String customerRefCancel;
 
     @JmsListener(destination = JmsConfig.ALLOCATE_ORDER_QUEUE)
     public void listen(Message<?> msg) {
@@ -22,10 +26,21 @@ public class OrderAllocationListener {
 
         log.trace("Got event: {}", orderEvent);
 
-        orderEvent.getBeerOrderDTO().getBeerOrderLines()
-                .forEach(line -> line.setQuantityAllocated(line.getOrderQuantity()));
+        if (orderEvent.getBeerOrderDTO().getCustomerRef() == null ||
+            !orderEvent.getBeerOrderDTO().getCustomerRef().equals(customerRefCancel)) {
+            Boolean error = orderEvent.getBeerOrderDTO().getCustomerRef() != null &&
+                    orderEvent.getBeerOrderDTO().getCustomerRef().equals(customerRefAllocationFail);
 
-        template.convertAndSend(JmsConfig.ALLOCATION_RESPONSE_QUEUE,
-                new AllocationResponseEvent(orderEvent.getBeerOrderDTO(), false, false));
+            Boolean partial = orderEvent.getBeerOrderDTO().getCustomerRef() != null &&
+                    orderEvent.getBeerOrderDTO().getCustomerRef().equals(customerRefAllocationPartial);
+
+            Integer minusQuantity = partial ? 1 : 0;
+
+            orderEvent.getBeerOrderDTO().getBeerOrderLines()
+                    .forEach(line -> line.setQuantityAllocated(line.getOrderQuantity() - minusQuantity));
+
+            template.convertAndSend(JmsConfig.ALLOCATION_RESPONSE_QUEUE,
+                    new AllocationResponseEvent(orderEvent.getBeerOrderDTO(), error, partial));
+        }
     }
 }

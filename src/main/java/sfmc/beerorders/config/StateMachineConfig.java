@@ -23,6 +23,9 @@ import sfmc.beerorders.domain.BeerOrderStatus;
 public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderStatus, BeerOrderEvent> {
     private final Action<BeerOrderStatus, BeerOrderEvent> validateOrderAction;
     private final Action<BeerOrderStatus, BeerOrderEvent> allocateOrderAction;
+    private final Action<BeerOrderStatus, BeerOrderEvent> validationFailedAction;
+    private final Action<BeerOrderStatus, BeerOrderEvent> allocationFailedAction;
+    private final Action<BeerOrderStatus, BeerOrderEvent> deallocateOrderAction;
 
     @Override
     public void configure(StateMachineConfigurationConfigurer<BeerOrderStatus, BeerOrderEvent> config) throws Exception {
@@ -43,50 +46,87 @@ public class StateMachineConfig extends StateMachineConfigurerAdapter<BeerOrderS
                 .states(EnumSet.allOf(BeerOrderStatus.class))
                 .end(BeerOrderStatus.VALIDATION_EXCEPTION)
                 .end(BeerOrderStatus.ALLOCATION_EXCEPTION)
-                .end(BeerOrderStatus.PICKED_UP);
+                .end(BeerOrderStatus.PICKED_UP)
+                .end(BeerOrderStatus.CANCELED);
     }
 
     @Override
     public void configure(StateMachineTransitionConfigurer<BeerOrderStatus, BeerOrderEvent> transitions) throws Exception {
         transitions
+                //new -> pending validation
                 .withExternal()
-                .source(BeerOrderStatus.NEW).target(BeerOrderStatus.PENDING_VALIDATION).event(BeerOrderEvent.VALIDATION)
+                .source(BeerOrderStatus.NEW).target(BeerOrderStatus.PENDING_VALIDATION)
+                .event(BeerOrderEvent.VALIDATION)
                 .action(validateOrderAction)
-
                 .and()
 
+                //pending validation -> validated
                 .withExternal()
-                .source(BeerOrderStatus.PENDING_VALIDATION).target(BeerOrderStatus.VALIDATED).event(BeerOrderEvent.VALIDATION_PASSED)
-
+                .source(BeerOrderStatus.PENDING_VALIDATION).target(BeerOrderStatus.VALIDATED)
+                .event(BeerOrderEvent.VALIDATION_PASSED)
                 .and()
 
+                //pending validation -> validation exception
                 .withExternal()
-                .source(BeerOrderStatus.PENDING_VALIDATION).target(BeerOrderStatus.VALIDATION_EXCEPTION).event(BeerOrderEvent.VALIDATION_FAILED)
-
+                .source(BeerOrderStatus.PENDING_VALIDATION).target(BeerOrderStatus.VALIDATION_EXCEPTION)
+                .event(BeerOrderEvent.VALIDATION_FAILED)
+                .action(validationFailedAction)
                 .and()
 
+                //pending validation -> canceled
                 .withExternal()
-                .source(BeerOrderStatus.VALIDATED).target(BeerOrderStatus.PENDING_ALLOCATION).event(BeerOrderEvent.ALLOCATION)
+                .source(BeerOrderStatus.PENDING_VALIDATION).target(BeerOrderStatus.CANCELED)
+                .event(BeerOrderEvent.CANCEL_ORDER)
+                .and()
+
+                //validated -> pending allocation
+                .withExternal()
+                .source(BeerOrderStatus.VALIDATED).target(BeerOrderStatus.PENDING_ALLOCATION)
+                .event(BeerOrderEvent.ALLOCATION)
                 .action(allocateOrderAction)
-
                 .and()
 
+                //validated -> canceled
                 .withExternal()
-                .source(BeerOrderStatus.PENDING_ALLOCATION).target(BeerOrderStatus.ALLOCATED).event(BeerOrderEvent.ALLOCATION_SUCCESS)
-
+                .source(BeerOrderStatus.VALIDATED).target(BeerOrderStatus.CANCELED)
+                .event(BeerOrderEvent.CANCEL_ORDER)
                 .and()
 
+                //pending allocation -> allocated
                 .withExternal()
-                .source(BeerOrderStatus.PENDING_ALLOCATION).target(BeerOrderStatus.ALLOCATION_EXCEPTION).event(BeerOrderEvent.ALLOCATION_FAILED)
-
+                .source(BeerOrderStatus.PENDING_ALLOCATION).target(BeerOrderStatus.ALLOCATED)
+                .event(BeerOrderEvent.ALLOCATION_SUCCESS)
                 .and()
 
+                //pending allocation -> allocation exception
                 .withExternal()
-                .source(BeerOrderStatus.PENDING_ALLOCATION).target(BeerOrderStatus.PENDING_INVENTORY).event(BeerOrderEvent.ALLOCATION_NO_INVENTORY)
-
+                .source(BeerOrderStatus.PENDING_ALLOCATION).target(BeerOrderStatus.ALLOCATION_EXCEPTION)
+                .event(BeerOrderEvent.ALLOCATION_FAILED)
+                .action(allocationFailedAction)
                 .and()
 
+                //pending allocation -> canceled
                 .withExternal()
-                .source(BeerOrderStatus.ALLOCATED).target(BeerOrderStatus.PICKED_UP).event(BeerOrderEvent.BEER_ORDER_PICKED_UP);
+                .source(BeerOrderStatus.PENDING_ALLOCATION).target(BeerOrderStatus.CANCELED)
+                .event(BeerOrderEvent.CANCEL_ORDER)
+                .and()
+
+                //pending allocation -> pending inventory
+                .withExternal()
+                .source(BeerOrderStatus.PENDING_ALLOCATION).target(BeerOrderStatus.PENDING_INVENTORY)
+                .event(BeerOrderEvent.ALLOCATION_NO_INVENTORY)
+                .and()
+
+                //allocated -> picked up
+                .withExternal()
+                .source(BeerOrderStatus.ALLOCATED).target(BeerOrderStatus.PICKED_UP)
+                .event(BeerOrderEvent.BEER_ORDER_PICKED_UP)
+                .and()
+
+                //allocated -> canceled
+                .withExternal()
+                .source(BeerOrderStatus.ALLOCATED).target(BeerOrderStatus.CANCELED)
+                .event(BeerOrderEvent.CANCEL_ORDER)
+                .action(deallocateOrderAction);
     }
 }

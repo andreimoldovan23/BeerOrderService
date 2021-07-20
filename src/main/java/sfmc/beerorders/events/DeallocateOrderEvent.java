@@ -12,8 +12,6 @@ import sfmc.beerorders.web.model.BeerOrderDTO;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AllocationResponseEvent implements Serializable {
+public class DeallocateOrderEvent implements Serializable {
     private BeerOrderDTO beerOrderDTO;
-    private Boolean allocationError;
-    private Boolean pendingInventory;
 }

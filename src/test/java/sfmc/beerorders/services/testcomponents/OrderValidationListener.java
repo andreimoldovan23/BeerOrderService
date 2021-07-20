@@ -2,6 +2,7 @@ package sfmc.beerorders.services.testcomponents;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jms.annotation.JmsListener;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.messaging.Message;
@@ -14,6 +15,9 @@ import sfmc.beerorders.events.ValidationResponseEvent;
 @RequiredArgsConstructor
 @Component
 public class OrderValidationListener {
+    @Value("${fail.validation}") private String customerRefFail;
+    @Value("${cancel.validation}") private String customerRefCancel;
+
     private final JmsTemplate template;
 
     @JmsListener(destination = JmsConfig.VALIDATE_ORDER_QUEUE)
@@ -22,7 +26,12 @@ public class OrderValidationListener {
 
         log.trace("Got event: {}", orderEvent);
 
-        template.convertAndSend(JmsConfig.VALIDATE_ORDER_RESPONSE_QUEUE,
-                new ValidationResponseEvent(orderEvent.getBeerOrderDTO().getId(), true));
+        if (orderEvent.getBeerOrderDTO().getCustomerRef() == null ||
+            !orderEvent.getBeerOrderDTO().getCustomerRef().equals(customerRefCancel)) {
+            template.convertAndSend(JmsConfig.VALIDATE_ORDER_RESPONSE_QUEUE,
+                    new ValidationResponseEvent(orderEvent.getBeerOrderDTO().getId(),
+                            orderEvent.getBeerOrderDTO().getCustomerRef() == null ||
+                                    !orderEvent.getBeerOrderDTO().getCustomerRef().equals(customerRefFail)));
+        }
     }
 }

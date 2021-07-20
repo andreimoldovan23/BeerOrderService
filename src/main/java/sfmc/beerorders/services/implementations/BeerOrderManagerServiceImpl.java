@@ -3,6 +3,7 @@ package sfmc.beerorders.services.implementations;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.statemachine.StateMachine;
@@ -17,6 +18,7 @@ import sfmc.beerorders.repositories.BeerOrderRepository;
 import sfmc.beerorders.services.interfaces.BeerOrderManagerService;
 import sfmc.beerorders.web.model.BeerOrderDTO;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BeerOrderManagerServiceImpl implements BeerOrderManagerService {
@@ -39,37 +41,53 @@ public class BeerOrderManagerServiceImpl implements BeerOrderManagerService {
     @Transactional
     @Override
     public void processValidationResult(UUID orderId, Boolean isValid) {
-        BeerOrder beerOrder = beerOrderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("No such order"));
-        if (isValid) {
-            sendEvent(beerOrder, BeerOrderEvent.VALIDATION_PASSED);
+        beerOrderRepository.findById(orderId).ifPresentOrElse(beerOrder -> {
+            if (isValid) {
+                sendEvent(beerOrder, BeerOrderEvent.VALIDATION_PASSED);
 
-            beerOrder = beerOrderRepository.findById(orderId).orElseThrow(() -> new RuntimeException("No such order"));
-            sendEvent(beerOrder, BeerOrderEvent.ALLOCATION);
-        } else {
-            sendEvent(beerOrder, BeerOrderEvent.VALIDATION_FAILED);
-        }
+                beerOrderRepository.findById(orderId).ifPresentOrElse(
+                        beerOrder1 -> sendEvent(beerOrder, BeerOrderEvent.ALLOCATION),
+                        () -> log.trace("Validation - No such order: {}", orderId)
+                );
+            } else {
+                sendEvent(beerOrder, BeerOrderEvent.VALIDATION_FAILED);
+            }
+        }, () -> log.trace("Validation - No such order: {}", orderId));
+
     }
 
     @Transactional
     @Override
     public void processAllocationResult(BeerOrderDTO dto, Boolean allocationError, Boolean pendingInventory) {
-        BeerOrder beerOrder = beerOrderRepository.findById(dto.getId()).orElseThrow(() -> new RuntimeException("No such order"));
-        if (!allocationError && !pendingInventory) {
-            sendEvent(beerOrder, BeerOrderEvent.ALLOCATION_SUCCESS);
-        } else if (!allocationError) {
-            sendEvent(beerOrder, BeerOrderEvent.ALLOCATION_NO_INVENTORY);
-        } else {
-            sendEvent(beerOrder, BeerOrderEvent.ALLOCATION_FAILED);
-            return;
-        }
-        updateQuantity(dto);
+        beerOrderRepository.findById(dto.getId()).ifPresentOrElse(beerOrder -> {
+            if (!allocationError && !pendingInventory) {
+                sendEvent(beerOrder, BeerOrderEvent.ALLOCATION_SUCCESS);
+            } else if (!allocationError) {
+                sendEvent(beerOrder, BeerOrderEvent.ALLOCATION_NO_INVENTORY);
+            } else {
+                sendEvent(beerOrder, BeerOrderEvent.ALLOCATION_FAILED);
+                return;
+            }
+            updateQuantity(dto);
+        }, () -> log.trace("Allocation - No such order: {}", dto.getId()));
     }
 
     @Transactional
     @Override
     public void pickOrderUp(UUID id) {
-        BeerOrder beerOrder = beerOrderRepository.findById(id).orElseThrow(() -> new RuntimeException("No such order"));
-        sendEvent(beerOrder, BeerOrderEvent.BEER_ORDER_PICKED_UP);
+        beerOrderRepository.findById(id).ifPresentOrElse(
+                beerOrder -> sendEvent(beerOrder, BeerOrderEvent.BEER_ORDER_PICKED_UP),
+                () -> log.trace("Pick up - No such order: {}", id)
+        );
+    }
+
+    @Transactional
+    @Override
+    public void cancelOrder(UUID id) {
+        beerOrderRepository.findById(id).ifPresentOrElse(
+                beerOrder -> sendEvent(beerOrder, BeerOrderEvent.CANCEL_ORDER),
+                () -> log.trace("Cancel - No such order: {}", id)
+        );
     }
 
     private void updateQuantity(BeerOrderDTO dto) {

@@ -12,7 +12,6 @@ import org.springframework.statemachine.support.StateMachineInterceptorAdapter;
 import org.springframework.statemachine.transition.Transition;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import sfmc.beerorders.domain.BeerOrder;
 import sfmc.beerorders.domain.BeerOrderEvent;
 import sfmc.beerorders.domain.BeerOrderStatus;
 import sfmc.beerorders.repositories.BeerOrderRepository;
@@ -32,10 +31,11 @@ public class BeerOrderStateChangeInterceptor extends StateMachineInterceptorAdap
                 .ifPresent(id -> {
             log.trace("saving state for order {}: {}", id, state.getId());
 
-            BeerOrder beerOrder = beerOrderRepository.findById(UUID.fromString(id))
-                    .orElseThrow(() -> new RuntimeException("No such order"));
-            beerOrder.setOrderStatus(state.getId());
-            beerOrderRepository.saveAndFlush(beerOrder);
+            beerOrderRepository.findById(UUID.fromString(id))
+                    .ifPresentOrElse(beerOrder -> {
+                        beerOrder.setOrderStatus(state.getId());
+                        beerOrderRepository.saveAndFlush(beerOrder);
+                    }, () -> log.trace("State change - no such order: {}", id));
         });
     }
 }

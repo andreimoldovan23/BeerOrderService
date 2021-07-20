@@ -11,31 +11,22 @@ import org.springframework.stereotype.Component;
 import sfmc.beerorders.config.JmsConfig;
 import sfmc.beerorders.domain.BeerOrderEvent;
 import sfmc.beerorders.domain.BeerOrderStatus;
-import sfmc.beerorders.events.ValidateOrderEvent;
-import sfmc.beerorders.repositories.BeerOrderRepository;
+import sfmc.beerorders.events.AllocationFailedEvent;
 import sfmc.beerorders.services.implementations.BeerOrderManagerServiceImpl;
-import sfmc.beerorders.web.mappers.BeerOrderMapper;
-import sfmc.beerorders.web.model.BeerOrderDTO;
 
-@Component
 @Slf4j
+@Component
 @RequiredArgsConstructor
-public class ValidateOrderAction implements Action<BeerOrderStatus, BeerOrderEvent> {
+public class AllocationFailedAction implements Action<BeerOrderStatus, BeerOrderEvent> {
     private final JmsTemplate jmsTemplate;
-    private final BeerOrderRepository beerOrderRepository;
-    private final BeerOrderMapper beerOrderMapper;
 
     @Override
     public void execute(StateContext<BeerOrderStatus, BeerOrderEvent> stateContext) {
         UUID id = UUID.fromString((String) stateContext.getMessage().getHeaders()
                 .getOrDefault(BeerOrderManagerServiceImpl.ORDER_ID_HEADER, " "));
 
-        log.trace("Validation - Got id from message: {}", id);
-        beerOrderRepository.findById(id).ifPresentOrElse(beerOrder -> {
-            log.trace("Validation - Got order from db: {}", beerOrder);
-            BeerOrderDTO dto = beerOrderMapper.beerOrderToDto(beerOrder);
+        log.trace("Allocation failed for: {}", id);
 
-            jmsTemplate.convertAndSend(JmsConfig.VALIDATE_ORDER_QUEUE, new ValidateOrderEvent(dto));
-        }, () -> log.trace("Validation action - no such order: {}", id));
+        jmsTemplate.convertAndSend(JmsConfig.ALLOCATION_FAILED_QUEUE, new AllocationFailedEvent(id));
     }
 }

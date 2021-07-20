@@ -1,6 +1,8 @@
 package sfmc.beerorders.services.implementations;
 
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +12,7 @@ import org.springframework.statemachine.StateMachine;
 import org.springframework.statemachine.config.StateMachineFactory;
 import org.springframework.statemachine.support.DefaultStateMachineContext;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import sfmc.beerorders.domain.BeerOrder;
 import sfmc.beerorders.domain.BeerOrderEvent;
@@ -28,27 +31,24 @@ public class BeerOrderManagerServiceImpl implements BeerOrderManagerService {
     private final StateMachineFactory<BeerOrderStatus, BeerOrderEvent> stateMachineFactory;
     private final BeerOrderStateChangeInterceptor interceptor;
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     @Override
     public BeerOrder newOrder(BeerOrder beerOrder) {
         beerOrder.setId(null);
         beerOrder.setOrderStatus(BeerOrderStatus.NEW);
-        beerOrder = beerOrderRepository.save(beerOrder);
+        beerOrder = beerOrderRepository.saveAndFlush(beerOrder);
         sendEvent(beerOrder, BeerOrderEvent.VALIDATION);
         return beerOrder;
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     @Override
     public void processValidationResult(UUID orderId, Boolean isValid) {
         beerOrderRepository.findById(orderId).ifPresentOrElse(beerOrder -> {
             if (isValid) {
                 sendEvent(beerOrder, BeerOrderEvent.VALIDATION_PASSED);
-
-                beerOrderRepository.findById(orderId).ifPresentOrElse(
-                        beerOrder1 -> sendEvent(beerOrder, BeerOrderEvent.ALLOCATION),
-                        () -> log.trace("Validation - No such order: {}", orderId)
-                );
+//                awaitStatusChange(orderId, BeerOrderStatus.VALIDATED);
+                sendEvent(beerOrder, BeerOrderEvent.ALLOCATION);
             } else {
                 sendEvent(beerOrder, BeerOrderEvent.VALIDATION_FAILED);
             }
@@ -56,14 +56,16 @@ public class BeerOrderManagerServiceImpl implements BeerOrderManagerService {
 
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     @Override
     public void processAllocationResult(BeerOrderDTO dto, Boolean allocationError, Boolean pendingInventory) {
         beerOrderRepository.findById(dto.getId()).ifPresentOrElse(beerOrder -> {
             if (!allocationError && !pendingInventory) {
                 sendEvent(beerOrder, BeerOrderEvent.ALLOCATION_SUCCESS);
+//                awaitStatusChange(dto.getId(), BeerOrderStatus.ALLOCATED);
             } else if (!allocationError) {
                 sendEvent(beerOrder, BeerOrderEvent.ALLOCATION_NO_INVENTORY);
+//                awaitStatusChange(dto.getId(), BeerOrderStatus.PENDING_INVENTORY);
             } else {
                 sendEvent(beerOrder, BeerOrderEvent.ALLOCATION_FAILED);
                 return;
@@ -89,6 +91,38 @@ public class BeerOrderManagerServiceImpl implements BeerOrderManagerService {
                 () -> log.trace("Cancel - No such order: {}", id)
         );
     }
+
+//    private void awaitStatusChange(UUID beerOrderId, BeerOrderStatus statusEnum) {
+//        AtomicBoolean found = new AtomicBoolean(false);
+//        AtomicInteger loopCount = new AtomicInteger(0);
+//
+//        while (!found.get()) {
+//            if (loopCount.incrementAndGet() > 10) {
+//                found.set(true);
+//                log.trace("Loop Retries exceeded for {}", beerOrderId);
+//                break;
+//            }
+//
+//            beerOrderRepository.findById(beerOrderId).ifPresentOrElse(beerOrder -> {
+//                if (beerOrder.getOrderStatus().equals(statusEnum)) {
+//                    found.set(true);
+//                    log.trace("Order {} Found. Tries {}", beerOrderId, loopCount.get());
+//                } else {
+//                    log.trace("Order Status for {} Not Equal. Expected: {} Found {} Tries {}", beerOrderId, statusEnum.name(),
+//                            beerOrder.getOrderStatus(), loopCount.get());
+//                }
+//            }, () -> log.trace("Order Id {} Not Found. Tries {}", beerOrderId, loopCount.get()));
+//
+//            if (!found.get()) {
+//                try {
+//                    log.trace("Sleeping for retry. Tries {}", loopCount.get());
+//                    Thread.sleep(100);
+//                } catch (Exception e) {
+//                    // do nothing
+//                }
+//            }
+//        }
+//    }
 
     private void updateQuantity(BeerOrderDTO dto) {
         BeerOrder beerOrder = beerOrderRepository.getById(dto.getId());

@@ -22,7 +22,7 @@ public class DefaultBootstrap implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (customerRepository.count() == 0)
+        if (customerRepository.findAllByCustomerNameLike(TASTING_ROOM).size() == 0)
             loadData();
     }
 

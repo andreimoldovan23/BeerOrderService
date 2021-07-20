@@ -1,21 +1,20 @@
 package sfmc.beerorders.services;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
+
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import sfmc.beerorders.bootstrap.DefaultBootstrap;
 import sfmc.beerorders.domain.Customer;
 import sfmc.beerorders.repositories.CustomerRepository;
 import sfmc.beerorders.services.interfaces.BeerOrderService;
 import sfmc.beerorders.web.model.BeerOrderDTO;
 import sfmc.beerorders.web.model.BeerOrderLineDTO;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
 
 @Slf4j
 @Service
@@ -35,8 +34,7 @@ public class TastingRoomService {
         beerUpcs.add(DefaultBootstrap.BEER_3_UPC);
     }
 
-    @Transactional
-    @Scheduled(fixedRate = 2000, initialDelay = 5000)
+    @Scheduled(fixedRate = 1000, initialDelay = 5000)
     public void placeTastingRoomOrder(){
         log.trace("Placing tasting room order...");
         List<Customer> customerList = customerRepository.findAllByCustomerNameLike(DefaultBootstrap.TASTING_ROOM);

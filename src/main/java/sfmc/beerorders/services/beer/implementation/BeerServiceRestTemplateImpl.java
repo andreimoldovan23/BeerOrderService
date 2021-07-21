@@ -3,6 +3,7 @@ package sfmc.beerorders.services.beer.implementation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import sfmc.beerorders.services.beer.interfaces.BeerService;
@@ -11,6 +12,7 @@ import sfmc.beerorders.services.beer.model.BeerDTO;
 import java.util.Optional;
 import java.util.UUID;
 
+@Profile("!localdiscovery")
 @Service
 @Slf4j
 public class BeerServiceRestTemplateImpl implements BeerService {

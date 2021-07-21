@@ -34,7 +34,7 @@ public class TastingRoomService {
         beerUpcs.add(DefaultBootstrap.BEER_3_UPC);
     }
 
-    @Scheduled(fixedRate = 1000, initialDelay = 5000)
+    @Scheduled(fixedRate = 5000, initialDelay = 5000)
     public void placeTastingRoomOrder(){
         log.trace("Placing tasting room order...");
         List<Customer> customerList = customerRepository.findAllByCustomerNameLike(DefaultBootstrap.TASTING_ROOM);

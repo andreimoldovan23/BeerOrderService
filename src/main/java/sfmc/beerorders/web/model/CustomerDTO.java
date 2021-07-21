@@ -10,5 +10,5 @@ import lombok.experimental.SuperBuilder;
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 public class CustomerDTO extends BaseItem {
-    private String name;
+    private String customerName;
 }

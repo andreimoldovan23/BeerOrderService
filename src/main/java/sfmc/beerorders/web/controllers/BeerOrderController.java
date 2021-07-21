@@ -1,5 +1,6 @@
 package sfmc.beerorders.web.controllers;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -14,16 +15,13 @@ import java.util.UUID;
 @Slf4j
 @RequestMapping("/api/v1/customers/{customerId}/")
 @RestController
+@RequiredArgsConstructor
 public class BeerOrderController {
 
     @Value("${default.page.number}") private Integer DEFAULT_PAGE_NUMBER;
     @Value("${default.page.size}") private Integer DEFAULT_PAGE_SIZE;
 
     private final BeerOrderService beerOrderService;
-
-    public BeerOrderController(BeerOrderService beerOrderService) {
-        this.beerOrderService = beerOrderService;
-    }
 
     @GetMapping("orders")
     public BeerOrderPagedList listOrders(@PathVariable UUID customerId,

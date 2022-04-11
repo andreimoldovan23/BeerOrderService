@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.jenspiegsa.wiremockextension.WireMockExtension;
 import com.github.tomakehurst.wiremock.WireMockServer;
+import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +21,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.jms.core.JmsTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
+import org.springframework.test.context.ActiveProfiles;
 import sfmc.beerorders.config.JmsConfig;
 import sfmc.beerorders.domain.BeerOrder;
 import sfmc.beerorders.domain.BeerOrderLine;
@@ -42,6 +44,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @ExtendWith(WireMockExtension.class)
 @SpringBootTest
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
+@ActiveProfiles("localdiscovery")
+@Ignore
 public class BeerOrderManagerImplIT {
 
     private static final String beerApiUpc = "/api/v1/beerUpc/12345";
